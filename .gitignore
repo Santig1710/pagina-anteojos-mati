@@ -1,6 +1,14 @@
+<<<<<<< HEAD
 __pycache__/
 *.py[cod]
 catalogo.db
 static/uploads/*
 !static/uploads/.gitkeep
+=======
+__pycache__/
+*.py[cod]
+catalogo.db
+static/uploads/*
+!static/uploads/.gitkeep
+>>>>>>> 24ef1780311d185fc4d6324678d30715b3c3ce43
 .venv/
