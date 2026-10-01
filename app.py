@@ -22,7 +22,8 @@ PAYMENT_METHODS = {"Efectivo", "Transferencia", "Cheque"}
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "cambia-esta-clave-antes-de-publicar")
 app.config["MAX_CONTENT_LENGTH"] = 8 * 1024 * 1024
-ADMIN_PASSWORD_HASH = generate_password_hash(os.environ.get("ADMIN_PASSWORD", "admin123"))
+ADMIN_PASSWORD_HASH = generate_password_hash(os.environ.get("ADMIN_PASSWORD", "Matata77"))
+ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "Mati77")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 
@@ -48,6 +49,15 @@ def initialize_database():
             CREATE TABLE IF NOT EXISTS settings (
                 key TEXT PRIMARY KEY,
                 value TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS home_slides (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
+                image TEXT NOT NULL DEFAULT '',
+                title TEXT NOT NULL DEFAULT '',
+                subtitle TEXT NOT NULL DEFAULT '',
+                sort_order INTEGER NOT NULL DEFAULT 0,
+                active INTEGER NOT NULL DEFAULT 1
             );
             CREATE TABLE IF NOT EXISTS companies (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -94,7 +104,37 @@ def initialize_database():
         defaults = {
             "store_name": "LUMEN ÓPTICA",
             "store_tagline": "Una nueva forma de mirar.",
+            "nav_collection": "Colección",
+            "nav_companies": "Empresas",
+            "nav_contact": "Contacto",
+            "hero_eyebrow": "ÓPTICA · SELECCIÓN INDEPENDIENTE",
+            "hero_intro": "Anteojos que acompañan tu manera de ver el mundo. Elegí el tuyo.",
+            "catalog_eyebrow": "01 — CATÁLOGO",
+            "collection_title": "Encontrá tu mirada.",
+            "collection_note": "Diseño, comodidad y personalidad.\nLa selección completa, en un solo lugar.",
+            "search_placeholder": "Buscar anteojos, marcas...",
+            "company_label": "EXPLORAR POR EMPRESA",
+            "closing_eyebrow": "LUMEN ÓPTICA · DESDE EL PRIMER VISTAZO",
+            "closing_line": "Una buena elección",
+            "closing_highlight": "se nota.",
+            "footer_tagline": "Diseño para ver y ser visto.",
+            "contact_eyebrow": "CONTACTO · ASESORAMIENTO PERSONALIZADO",
+            "contact_heading": "Hablemos de tu próxima mirada.",
+            "contact_intro": "Estamos para ayudarte a elegir tus próximos anteojos.",
+            "contact_cta": "Escribinos por WhatsApp",
             "whatsapp": "",
+            "contact_name": "",
+            "contact_phone": "",
+            "contact_email": "",
+            "contact_address": "",
+            "instagram": "",
+            "facebook": "",
+            "tiktok": "",
+            "logo": "",
+            "theme_primary": "#164c3e",
+            "theme_secondary": "#c94f32",
+            "theme_paper": "#f5f2e9",
+            "theme_sun": "#e7b842",
         }
         db.executemany(
             "INSERT OR IGNORE INTO settings(key, value) VALUES (?, ?)", defaults.items()
@@ -152,7 +192,41 @@ def csrf_token():
 
 @app.context_processor
 def inject_template_helpers():
-    return {"csrf_token": csrf_token, "settings": get_settings()}
+    settings = get_settings()
+    social_urls = {
+        "instagram": social_url(settings.get("instagram"), "https://www.instagram.com/"),
+        "facebook": social_url(settings.get("facebook"), "https://www.facebook.com/"),
+        "tiktok": social_url(settings.get("tiktok"), "https://www.tiktok.com/@"),
+    }
+    return {
+        "csrf_token": csrf_token,
+        "settings": settings,
+        "social_urls": social_urls,
+        "theme": {
+            "primary": safe_color(settings.get("theme_primary"), "#164c3e"),
+            "secondary": safe_color(settings.get("theme_secondary"), "#c94f32"),
+            "paper": safe_color(settings.get("theme_paper"), "#f5f2e9"),
+            "sun": safe_color(settings.get("theme_sun"), "#e7b842"),
+        },
+    }
+
+
+def social_url(value, base_url):
+    value = str(value or "").strip()
+    if not value:
+        return ""
+    if value.startswith(("https://", "http://")):
+        return value
+    return base_url + value.lstrip("@/")
+
+
+def safe_color(value, fallback):
+    value = str(value or "")
+    if len(value) == 7 and value.startswith("#") and all(
+        char in "0123456789abcdefABCDEF" for char in value[1:]
+    ):
+        return value
+    return fallback
 
 
 app.jinja_env.filters["from_json"] = json.loads
@@ -199,8 +273,22 @@ def storefront():
                JOIN brands ON brands.id = products.brand_id
                WHERE products.featured = 1 ORDER BY products.id DESC"""
         ).fetchall()]
+        home_slides = [dict(row) for row in db.execute(
+            """SELECT home_slides.*, products.name AS product_name, products.image AS product_image,
+                      companies.name AS product_company, brands.name AS product_brand
+               FROM home_slides
+               LEFT JOIN products ON products.id = home_slides.product_id
+               LEFT JOIN companies ON companies.id = products.company_id
+               LEFT JOIN brands ON brands.id = products.brand_id
+               WHERE home_slides.active = 1 ORDER BY home_slides.sort_order, home_slides.id"""
+        ).fetchall()]
     return render_template(
-        "index.html", companies=companies, brands=brands, products=products, featured=featured
+        "index.html",
+        companies=companies,
+        brands=brands,
+        products=products,
+        featured=featured,
+        home_slides=home_slides,
     )
 
 
@@ -285,8 +373,7 @@ def admin_login():
     if session.get("admin"):
         return redirect(url_for("admin_dashboard"))
     if request.method == "POST":
-        username = os.environ.get("ADMIN_USERNAME", "admin")
-        if request.form.get("username", "") == username and check_password_hash(
+        if request.form.get("username", "") == ADMIN_USERNAME and check_password_hash(
             ADMIN_PASSWORD_HASH, request.form.get("password", "")
         ):
             session.clear()
@@ -308,6 +395,10 @@ def admin_logout():
 @admin_required
 def admin_dashboard():
     tab = request.args.get("tab", "productos")
+    if tab == "ajustes":
+        return redirect(url_for("admin_dashboard", tab="portada"))
+    if tab not in {"productos", "pedidos", "empresas", "marcas", "portada", "contacto"}:
+        tab = "productos"
     with connect_db() as db:
         products = [dict(row) for row in db.execute(
             """SELECT products.*, brands.name AS brand_name, companies.name AS company_name
@@ -319,6 +410,11 @@ def admin_dashboard():
             "SELECT brands.*, companies.name AS company_name FROM brands JOIN companies ON companies.id = brands.company_id ORDER BY brands.name"
         ).fetchall()]
         orders = [dict(row) for row in db.execute("SELECT * FROM orders ORDER BY rowid DESC").fetchall()]
+        slides = [dict(row) for row in db.execute(
+            """SELECT home_slides.*, products.name AS product_name, products.image AS product_image
+               FROM home_slides LEFT JOIN products ON products.id = home_slides.product_id
+               ORDER BY home_slides.sort_order, home_slides.id"""
+        ).fetchall()]
         order_items = {}
         for order in orders:
             order_items[order["id"]] = [dict(row) for row in db.execute(
@@ -332,6 +428,7 @@ def admin_dashboard():
         brands=brands,
         orders=orders,
         order_items=order_items,
+        slides=slides,
     )
 
 
@@ -477,15 +574,138 @@ def delete_brand(brand_id):
 @app.post("/admin/settings")
 @admin_required
 def save_settings():
-    values = {
-        "store_name": request.form.get("store_name", "").strip()[:80],
-        "store_tagline": request.form.get("store_tagline", "").strip()[:160],
-        "whatsapp": request.form.get("whatsapp", "").strip()[:30],
+    section = request.form.get("section", "portada")
+    fields = {
+        "portada": {
+            "store_name": 80,
+            "store_tagline": 160,
+            "nav_collection": 40,
+            "nav_companies": 40,
+            "nav_contact": 40,
+            "hero_eyebrow": 100,
+            "hero_intro": 240,
+            "catalog_eyebrow": 80,
+            "collection_title": 100,
+            "collection_note": 240,
+            "search_placeholder": 100,
+            "company_label": 80,
+            "closing_eyebrow": 120,
+            "closing_line": 100,
+            "closing_highlight": 100,
+            "footer_tagline": 160,
+            "theme_primary": 7,
+            "theme_secondary": 7,
+            "theme_paper": 7,
+            "theme_sun": 7,
+        },
+        "contacto": {
+            "contact_eyebrow": 100,
+            "contact_heading": 120,
+            "contact_intro": 240,
+            "contact_cta": 100,
+            "contact_name": 100,
+            "contact_phone": 40,
+            "contact_email": 120,
+            "contact_address": 180,
+            "whatsapp": 30,
+            "instagram": 160,
+            "facebook": 160,
+            "tiktok": 160,
+        },
     }
+    if section not in fields:
+        flash("La sección solicitada no es válida.", "error")
+        return redirect(url_for("admin_dashboard", tab="portada"))
+    values = {
+        key: request.form.get(key, "").strip()[:limit]
+        for key, limit in fields[section].items()
+    }
+    if section == "portada":
+        for key, fallback in (
+            ("theme_primary", "#164c3e"),
+            ("theme_secondary", "#c94f32"),
+            ("theme_paper", "#f5f2e9"),
+            ("theme_sun", "#e7b842"),
+        ):
+            values[key] = safe_color(values[key], fallback)
+        current_logo = get_settings().get("logo", "")
+        if request.form.get("remove_logo") == "on":
+            values["logo"] = ""
+        else:
+            try:
+                values["logo"] = save_uploaded_image(request.files.get("logo")) or current_logo
+            except ValueError as error:
+                flash(str(error), "error")
+                return redirect(url_for("admin_dashboard", tab="portada"))
     with connect_db() as db:
         db.executemany("INSERT OR REPLACE INTO settings(key, value) VALUES (?, ?)", values.items())
-    flash("Datos de la tienda guardados.", "success")
-    return redirect(url_for("admin_dashboard", tab="ajustes"))
+    flash("Cambios guardados.", "success")
+    return redirect(url_for("admin_dashboard", tab=section))
+
+
+@app.post("/admin/slides")
+@admin_required
+def save_slide():
+    slide_id = request.form.get("slide_id", "").strip()
+    product_id = request.form.get("product_id", "").strip()
+    title = request.form.get("title", "").strip()[:100]
+    subtitle = request.form.get("subtitle", "").strip()[:180]
+    try:
+        sort_order = int(request.form.get("sort_order", "0"))
+    except ValueError:
+        flash("El orden debe ser un número entero.", "error")
+        return redirect(url_for("admin_dashboard", tab="portada"))
+
+    with connect_db() as db:
+        existing = db.execute("SELECT * FROM home_slides WHERE id = ?", (slide_id,)).fetchone() if slide_id else None
+        if slide_id and not existing:
+            flash("No se encontró la diapositiva para editar.", "error")
+            return redirect(url_for("admin_dashboard", tab="portada"))
+        if product_id:
+            selected_product = db.execute("SELECT id FROM products WHERE id = ?", (product_id,)).fetchone()
+            if not selected_product:
+                flash("Elegí un anteojo válido para destacar.", "error")
+                return redirect(url_for("admin_dashboard", tab="portada"))
+            image = existing["image"] if existing else ""
+        else:
+            try:
+                uploaded = save_uploaded_image(request.files.get("image"))
+            except ValueError as error:
+                flash(str(error), "error")
+                return redirect(url_for("admin_dashboard", tab="portada"))
+            image = uploaded or (existing["image"] if existing else "")
+            if not image or not title:
+                flash("Una diapositiva con foto necesita imagen y título.", "error")
+                return redirect(url_for("admin_dashboard", tab="portada"))
+        values = (
+            int(product_id) if product_id else None,
+            image,
+            title,
+            subtitle,
+            sort_order,
+            int(request.form.get("active") == "on"),
+        )
+        if slide_id:
+            db.execute(
+                "UPDATE home_slides SET product_id=?, image=?, title=?, subtitle=?, sort_order=?, active=? WHERE id=?",
+                (*values, slide_id),
+            )
+        else:
+            db.execute(
+                "INSERT INTO home_slides(product_id, image, title, subtitle, sort_order, active) VALUES (?, ?, ?, ?, ?, ?)",
+                values,
+            )
+    flash("Diapositiva guardada.", "success")
+    return redirect(url_for("admin_dashboard", tab="portada"))
+
+
+@app.post("/admin/slides/<int:slide_id>/delete")
+@admin_required
+def delete_slide(slide_id):
+    with connect_db() as db:
+        db.execute("DELETE FROM home_slides WHERE id = ?", (slide_id,))
+    flash("Diapositiva eliminada.", "success")
+    return redirect(url_for("admin_dashboard", tab="portada"))
 
 
 @app.post("/admin/orders/<order_id>")

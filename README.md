@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Lumen Óptica
 
 Aplicación web para administrar un catálogo de anteojos y recibir pedidos de compra. Está construida con Python, Flask y SQLite.
@@ -12,55 +11,34 @@ Aplicación web para administrar un catálogo de anteojos y recibir pedidos de c
 
 ```powershell
 pip install -r requirements.txt
-$env:ADMIN_USERNAME = "admin"
-$env:ADMIN_PASSWORD = "elegir-una-clave-segura"
+$env:ADMIN_USERNAME = "Mati77"
+$env:ADMIN_PASSWORD = "Matata77"
 $env:SECRET_KEY = "reemplazar-por-una-clave-larga-y-aleatoria"
 python app.py
 ```
 
-Abrí `http://127.0.0.1:5000`. El primer inicio crea una base SQLite, una empresa y dos anteojos de muestra. Para entrar al panel, abrí `/admin`. Si no definís variables de entorno, las credenciales de demostración son `admin` / `admin123`; cambialas antes de publicar la aplicación.
+Abrí `http://127.0.0.1:5000`. El primer inicio crea una base SQLite, una empresa y dos anteojos de muestra. Para entrar al panel, abrí `/admin`. Sin variables de entorno, el usuario y la contraseña iniciales son `Mati77` / `Matata77`.
 
-El archivo `catalogo.db` se crea en la carpeta del proyecto. Las imágenes cargadas por administración se guardan en `static/uploads/` (límite de 8 MB; JPG, PNG, WEBP o GIF).
+Si PythonAnywhere ya tiene configuradas `ADMIN_USERNAME` o `ADMIN_PASSWORD`, esas variables prevalecen sobre los valores predeterminados; actualizalas también en la configuración WSGI antes de recargar la aplicación.
 
-## Uso
+El archivo `catalogo.db` se crea en la carpeta del proyecto. Las imágenes cargadas desde el panel se guardan en `static/uploads/` (máximo 8 MB; JPG, PNG, WEBP o GIF). Las tablas y preferencias nuevas se crean sin borrar los datos existentes.
 
-- Desde **Empresas** y **Marcas**, organizá el catálogo. En **Nuevo anteojo**, elegí empresa, marca y tipo, y completá nombre, imagen, precio y stock. Los productos destacados rotan en la portada.
-- Configurá el nombre, la frase de portada y el número del vendedor en **Datos de tienda**. El teléfono debe incluir el código de país y área, solo con dígitos.
-- El comprador filtra el catálogo, agrega cantidades al pedido, informa nombre y asigna porcentajes a uno o varios medios de pago. Los porcentajes deben sumar 100.
-- Al confirmar, se registra un código único, se reserva stock y se abre WhatsApp con el mensaje dirigido al vendedor. Ese mismo código aparece en **Pedidos**. El público no tiene un historial de compras.
-- En administración se pueden ajustar cantidades y estado del pedido. Cancelar devuelve el stock; reactivar reserva nuevamente las unidades disponibles.
+## Administración
 
-=======
-# Lumen Óptica
+- En **Anteojos**, creá y editá productos, imágenes, stock y cuáles aparecen destacados.
+- En **Empresas** y **Marcas**, organizá el catálogo.
+- En **Portada**, cambiá el nombre, los textos visibles, el logo y los colores. Agregá diapositivas con fotos propias o vinculadas a anteojos, ordenalas y activalas o desactivalas. Si no hay diapositivas propias, se muestran los productos destacados.
+- En **Contacto**, configurá nombre, teléfono, WhatsApp, email, dirección y redes sociales. Esos datos aparecen al final de la tienda.
+- En **Pedidos**, ajustá cantidades y estados. Cancelar devuelve las unidades al inventario; reactivar reserva las disponibles.
 
-Aplicación web para administrar un catálogo de anteojos y recibir pedidos de compra. Está construida con Python, Flask y SQLite.
+## Compras
 
-## Requisitos
+Los compradores pueden filtrar el catálogo, elegir cantidades, combinar métodos de pago y distribuir porcentajes que sumen 100. Al confirmar, se registra un código de pedido, se reserva stock y se prepara un mensaje de WhatsApp para el vendedor. El panel muestra el mismo código; el público no tiene historial de compras.
 
-- Python 3.10 o superior.
-- Flask (`pip install -r requirements.txt`).
-
-## Iniciar en Windows PowerShell
+## Pruebas
 
 ```powershell
-pip install -r requirements.txt
-$env:ADMIN_USERNAME = "admin"
-$env:ADMIN_PASSWORD = "elegir-una-clave-segura"
-$env:SECRET_KEY = "reemplazar-por-una-clave-larga-y-aleatoria"
-python app.py
+python -m unittest discover -s tests -v
 ```
 
-Abrí `http://127.0.0.1:5000`. El primer inicio crea una base SQLite, una empresa y dos anteojos de muestra. Para entrar al panel, abrí `/admin`. Si no definís variables de entorno, las credenciales de demostración son `admin` / `admin123`; cambialas antes de publicar la aplicación.
-
-El archivo `catalogo.db` se crea en la carpeta del proyecto. Las imágenes cargadas por administración se guardan en `static/uploads/` (límite de 8 MB; JPG, PNG, WEBP o GIF).
-
-## Uso
-
-- Desde **Empresas** y **Marcas**, organizá el catálogo. En **Nuevo anteojo**, elegí empresa, marca y tipo, y completá nombre, imagen, precio y stock. Los productos destacados rotan en la portada.
-- Configurá el nombre, la frase de portada y el número del vendedor en **Datos de tienda**. El teléfono debe incluir el código de país y área, solo con dígitos.
-- El comprador filtra el catálogo, agrega cantidades al pedido, informa nombre y asigna porcentajes a uno o varios medios de pago. Los porcentajes deben sumar 100.
-- Al confirmar, se registra un código único, se reserva stock y se abre WhatsApp con el mensaje dirigido al vendedor. Ese mismo código aparece en **Pedidos**. El público no tiene un historial de compras.
-- En administración se pueden ajustar cantidades y estado del pedido. Cancelar devuelve el stock; reactivar reserva nuevamente las unidades disponibles.
-
->>>>>>> 24ef1780311d185fc4d6324678d30715b3c3ce43
-La aplicación es una base funcional para desarrollo local. Antes de publicarla en internet, usá HTTPS, configurá una clave secreta y credenciales robustas, y desplegala detrás de un servidor WSGI de producción.
+Esta aplicación está preparada como base funcional de desarrollo. Antes de publicarla, configurá credenciales y clave secreta robustas, usá HTTPS y desplegala detrás de un servidor WSGI de producción.
