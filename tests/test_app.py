@@ -2,6 +2,7 @@ from io import BytesIO
 import pathlib
 import tempfile
 import unittest
+from urllib.parse import parse_qs, unquote, urlparse
 
 import app as application
 
@@ -121,6 +122,47 @@ class StorefrontTests(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 400)
         self.assertIn("100%", response.json["error"])
+
+    def test_public_page_hides_admin_links_and_panel_requires_login(self):
+        public_page = self.client.get("/")
+        self.assertNotIn(b"Acceso tienda", public_page.data)
+        self.assertNotIn(b"Administraci\xc3\xb3n", public_page.data)
+        self.assertEqual(self.client.get("/admin/panel").status_code, 302)
+
+    def test_whatsapp_message_is_editable_around_fixed_order_id(self):
+        with self.client.session_transaction() as browser_session:
+            browser_session["admin"] = True
+            browser_session["csrf_token"] = "admin-csrf-token"
+        editor = self.client.get("/admin/panel?tab=mensaje")
+        self.assertEqual(editor.status_code, 200)
+        self.assertIn("OC-XXXXXX".encode(), editor.data)
+
+        saved = self.client.post(
+            "/admin/settings",
+            data={
+                "csrf_token": "admin-csrf-token",
+                "section": "mensaje",
+                "whatsapp_message_before": "Buen día, recibí tu pedido:",
+                "whatsapp_message_after": "Te contactamos pronto.",
+            },
+        )
+        self.assertEqual(saved.status_code, 302)
+
+        response = self.client.post(
+            "/order",
+            json={
+                "buyer_name": "Comprador de prueba",
+                "items": [{"id": 1, "quantity": 1}],
+                "payments": [{"method": "Efectivo", "percent": 100}],
+            },
+            headers={"X-CSRF-Token": "admin-csrf-token"},
+        )
+        self.assertEqual(response.status_code, 200)
+        message = parse_qs(urlparse(response.json["whatsapp_url"]).query)["text"][0]
+        self.assertEqual(
+            unquote(message),
+            f"Buen día, recibí tu pedido: {response.json['order_id']} Te contactamos pronto.",
+        )
 
     def test_admin_can_customize_cover_slide_and_contact(self):
         with self.client.session_transaction() as browser_session:

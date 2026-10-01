@@ -123,6 +123,8 @@ def initialize_database():
             "contact_intro": "Estamos para ayudarte a elegir tus próximos anteojos.",
             "contact_cta": "Escribinos por WhatsApp",
             "whatsapp": "",
+            "whatsapp_message_before": "Hola! Me interesa comprar, mi orden de compra es:",
+            "whatsapp_message_after": "",
             "contact_name": "",
             "contact_phone": "",
             "contact_email": "",
@@ -363,7 +365,9 @@ def create_order():
 
     settings = get_settings()
     whatsapp_number = "".join(char for char in settings.get("whatsapp", "") if char.isdigit())
-    message = quote(f"Hola! Me interesa comprar, mi orden de compra es: {order_id}")
+    message_before = settings.get("whatsapp_message_before", "").strip()
+    message_after = settings.get("whatsapp_message_after", "").strip()
+    message = quote(" ".join(part for part in (message_before, order_id, message_after) if part))
     whatsapp_url = f"https://wa.me/{whatsapp_number}?text={message}" if whatsapp_number else f"https://wa.me/?text={message}"
     return jsonify(order_id=order_id, whatsapp_url=whatsapp_url)
 
@@ -397,7 +401,7 @@ def admin_dashboard():
     tab = request.args.get("tab", "productos")
     if tab == "ajustes":
         return redirect(url_for("admin_dashboard", tab="portada"))
-    if tab not in {"productos", "pedidos", "empresas", "marcas", "portada", "contacto"}:
+    if tab not in {"productos", "pedidos", "empresas", "marcas", "portada", "contacto", "mensaje"}:
         tab = "productos"
     with connect_db() as db:
         products = [dict(row) for row in db.execute(
@@ -611,6 +615,10 @@ def save_settings():
             "instagram": 160,
             "facebook": 160,
             "tiktok": 160,
+        },
+        "mensaje": {
+            "whatsapp_message_before": 240,
+            "whatsapp_message_after": 160,
         },
     }
     if section not in fields:

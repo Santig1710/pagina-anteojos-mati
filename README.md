@@ -29,7 +29,10 @@ El archivo `catalogo.db` se crea en la carpeta del proyecto. Las imágenes carga
 - En **Empresas** y **Marcas**, organizá el catálogo.
 - En **Portada**, cambiá el nombre, los textos visibles, el logo y los colores. Agregá diapositivas con fotos propias o vinculadas a anteojos, ordenalas y activalas o desactivalas. Si no hay diapositivas propias, se muestran los productos destacados.
 - En **Contacto**, configurá nombre, teléfono, WhatsApp, email, dirección y redes sociales. Esos datos aparecen al final de la tienda.
+- En **Mensaje WhatsApp**, editá el texto anterior y posterior al código. El código se agrega automáticamente y no se puede modificar.
 - En **Pedidos**, ajustá cantidades y estados. Cancelar devuelve las unidades al inventario; reactivar reserva las disponibles.
+
+El índice público no muestra enlaces al panel. La ruta `/admin` sigue disponible para iniciar sesión; las rutas de edición requieren una sesión autenticada.
 
 ## Compras
 

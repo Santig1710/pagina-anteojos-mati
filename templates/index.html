@@ -20,7 +20,6 @@
       <a href="#contacto">{{ settings.nav_contact }}</a>
     </nav>
     <div class="header-actions">
-      <a class="admin-link" href="{{ url_for('admin_login') }}">Acceso tienda <span aria-hidden="true">↗</span></a>
       <button class="cart-trigger" id="cartTrigger" type="button" aria-label="Abrir pedido">
         <span>Mi pedido</span><span class="cart-count" id="cartCount">0</span>
       </button>
@@ -103,7 +102,7 @@
     <div class="contact-copy"><p class="eyebrow">{{ settings.contact_eyebrow }}</p><h2>{{ settings.contact_heading }}</h2><p>{{ settings.contact_intro }}</p>{% set wa_number = (settings.whatsapp or settings.contact_phone)|replace('+', '')|replace(' ', '')|replace('-', '') %}{% if wa_number %}<a class="contact-cta" href="https://wa.me/{{ wa_number }}" target="_blank" rel="noopener">{{ settings.contact_cta }} <span aria-hidden="true">↗</span></a>{% endif %}</div>
     <div class="contact-details"><p class="eyebrow">CONTACTO</p>{% if settings.contact_name %}<strong>{{ settings.contact_name }}</strong>{% endif %}{% if settings.contact_phone %}<a href="tel:{{ settings.contact_phone|replace(' ', '') }}">{{ settings.contact_phone }}</a>{% endif %}{% if settings.contact_email %}<a href="mailto:{{ settings.contact_email }}">{{ settings.contact_email }}</a>{% endif %}{% if settings.contact_address %}<span>{{ settings.contact_address }}</span>{% endif %}<div class="social-links">{% for network, label in [('instagram', 'Instagram'), ('facebook', 'Facebook'), ('tiktok', 'TikTok')] %}{% if social_urls[network] %}<a href="{{ social_urls[network] }}" target="_blank" rel="noopener">{{ label }} ↗</a>{% endif %}{% endfor %}</div></div>
   </section>
-  <footer class="site-footer"><a class="wordmark" href="/">{% if settings.logo %}<img class="logo-image" src="{{ url_for('static', filename='uploads/' ~ settings.logo) }}" alt="{{ settings.store_name }}">{% else %}{{ settings.store_name }}<span class="wordmark-dot">.</span>{% endif %}</a><span>{{ settings.footer_tagline }}</span><a href="{{ url_for('admin_login') }}">Administración ↗</a></footer>
+  <footer class="site-footer"><a class="wordmark" href="/">{% if settings.logo %}<img class="logo-image" src="{{ url_for('static', filename='uploads/' ~ settings.logo) }}" alt="{{ settings.store_name }}">{% else %}{{ settings.store_name }}<span class="wordmark-dot">.</span>{% endif %}</a><span>{{ settings.footer_tagline }}</span></footer>
 
   <div class="drawer-backdrop" id="drawerBackdrop"></div>
   <aside class="cart-drawer" id="cartDrawer" aria-label="Tu pedido" aria-hidden="true">
