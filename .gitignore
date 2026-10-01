@@ -1,0 +1,6 @@
+__pycache__/
+*.py[cod]
+catalogo.db
+static/uploads/*
+!static/uploads/.gitkeep
+.venv/
