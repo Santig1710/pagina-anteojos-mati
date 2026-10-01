@@ -1,14 +1,24 @@
-<<<<<<< HEAD
 __pycache__/
 *.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Variables de entorno y secretos locales
+.env
+
+# Bases de datos locales y archivos auxiliares de SQLite
 catalogo.db
+*.db-shm
+*.db-wal
+
+# Archivos subidos localmente; conservar el marcador de la carpeta
 static/uploads/*
 !static/uploads/.gitkeep
-=======
-__pycache__/
-*.py[cod]
-catalogo.db
-static/uploads/*
-!static/uploads/.gitkeep
->>>>>>> 24ef1780311d185fc4d6324678d30715b3c3ce43
+
+# Entornos virtuales y archivos del sistema
 .venv/
+venv/
+instance/
+.DS_Store
+Thumbs.db
